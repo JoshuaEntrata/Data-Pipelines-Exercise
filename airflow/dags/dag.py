@@ -145,6 +145,15 @@ def ingest_to_database():
 
     conn.commit()
     
+def create_weekly_view():
+    df_merged = pd.read_parquet("/opt/airflow/parquet/merged/add_age.parquet")
+    df_merged['avail_date'] = pd.to_datetime(df_merged['avail_date'])
+    weekly_view = df_merged.groupby([df_merged['avail_date'].dt.to_period("W-Mon"), 'service'])['price'].sum().to_frame()
+
+    weekly_view = weekly_view.rename(columns={'price': 'Total Sales'}).rename_axis(index={'avail_date': 'Weeks', 'service': 'Service'})
+
+    weekly_view.to_excel("weekly_view.xlsx")
+    
 
 args = {
     'owner': 'JoshuaEntrata',
@@ -155,6 +164,7 @@ dag = DAG(
     dag_id = 'my_data_pipeline',
     default_args = args,
     schedule_interval = '@hourly',
+    # schedule_interval = dt.time_delta(minutes=2)
     max_active_runs = 1,
 )
 
@@ -221,5 +231,10 @@ with dag:
         task_id='ingest_to_database',
         python_callable=ingest_to_database,
     )
+    
+    m_create_weekly_view = PythonOperator(
+        task_id='create_weekly_view',
+        python_callable=create_weekly_view,
+    )
 
-ct_load_database >> ct_fix_name_formats >> ct_remove_invalid_dates >> ct_remove_duplicates >> bst_load_database >> bst_fix_branch_service_format >> bst_fix_price_format >> bst_remove_duplicates >> m_merged_data_frames >> m_remove_duplicate_txn_id >> m_add_age_column >> m_ingest_to_database
+ct_load_database >> ct_fix_name_formats >> ct_remove_invalid_dates >> ct_remove_duplicates >> bst_load_database >> bst_fix_branch_service_format >> bst_fix_price_format >> bst_remove_duplicates >> m_merged_data_frames >> m_remove_duplicate_txn_id >> m_add_age_column >> m_ingest_to_database >> m_create_weekly_view

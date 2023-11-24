@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  labexercise3:
+    image: labexercise3:latest
+
+    volumes:
+      - ./airflow:/opt/airflow
+      - ./database:/opt/airflow/database
+      - ./json:/opt/airflow/json
+      - ./parquet:/opt/airflow/parquet
+      - ./scripts:/opt/airflow/scripts
+
+    ports:
+      - "8080:8080"
+
+    command: airflow standalone

@@ -159,7 +159,7 @@ def ingest_to_database():
     
 def create_weekly_view():
     conn = sqlite3.connect('/opt/airflow/database/merged.db')
-    view_sql = "CREATE VIEW weekly_summary AS \
+    view_sql = "CREATE VIEW IF NOT EXISTS weekly_summary AS \
     SELECT \
     MIN(start_week) as start_week, \
     MAX(end_week) as end_week, \

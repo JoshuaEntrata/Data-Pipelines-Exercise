@@ -12,7 +12,7 @@ df_customer_transaction['birthday'] = pd.to_datetime(df_customer_transaction['bi
 
 print("")
 
-print("Remove dates in future:")
+print("Removing dates in the future...")
 print(df_customer_transaction.shape)
 df_customer_transaction = df_customer_transaction[df_customer_transaction['avail_date'] <= now]
 df_customer_transaction = df_customer_transaction[df_customer_transaction['birthday'] <= now]
@@ -20,17 +20,18 @@ print(df_customer_transaction.shape)
 
 print("")
 
-print("Check the latest dates:")
+print("Checking the latest dates...")
 print(df_customer_transaction['avail_date'].max())
 print(df_customer_transaction['birthday'].max())
 
 print("")
 
-print("Remove availment date earlier than birthday:")
+print("Removing availment date earlier than birthday...")
 print(df_customer_transaction.shape)
 df_customer_transaction = df_customer_transaction[df_customer_transaction['birthday'] <= df_customer_transaction['avail_date']]
 print(df_customer_transaction.shape)
 
 df_customer_transaction.to_parquet("D:\Github\School Projects\Data Warehousing Class\LabExercise3\parquet\customer_transaction\customer_txn_remove_invalid_dates.parquet")
 print("")
-print("Successfully removing invalid dates")
+print("Successfully removed invalid dates...")
+print("")

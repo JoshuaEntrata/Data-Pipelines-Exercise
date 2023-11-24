@@ -158,6 +158,28 @@ def ingest_to_database():
     print("Successfully ingested data to database...")
     
 def create_weekly_view():
+    conn = sqlite3.connect('/opt/airflow/database/merged.db')
+    view_sql = "CREATE VIEW weekly_summary AS \
+    SELECT \
+    MIN(start_week) as start_week, \
+    MAX(end_week) as end_week, \
+    GROUP_CONCAT(service, x'0a') as services, \
+    GROUP_CONCAT(total_price, x'0a') AS total_price \
+    FROM ( \
+        SELECT \
+        strftime('%Y-%W', avail_date) AS week, \
+        date(avail_date, '-' || strftime('%w', avail_date) || ' days') AS start_week, \
+        date(avail_date, '-' || (6 - strftime('%w', avail_date) % 7) || ' days') AS end_week, \
+        service, \
+        SUM(price) AS total_price \
+        FROM 'transaction' \
+        GROUP BY week, service \
+    ) GROUP BY week"
+    cursor = conn.cursor()
+    cursor.execute(view_sql)
+    conn.commit()
+    print("Successfully created weekly view in database...")
+    
     df_merged = pd.read_parquet("/opt/airflow/parquet/merged/add_age.parquet")
     df_merged['avail_date'] = pd.to_datetime(df_merged['avail_date'])
     weekly_view = df_merged.groupby([df_merged['avail_date'].dt.to_period("W-Mon"), 'service'])['price'].sum().to_frame()
@@ -165,7 +187,7 @@ def create_weekly_view():
     weekly_view = weekly_view.rename(columns={'price': 'Total Sales'}).rename_axis(index={'avail_date': 'Weeks', 'service': 'Service'})
 
     weekly_view.to_excel("weekly_view.xlsx")
-    print("Successfully created weekly view...")
+    print("Successfully created weekly view in excel file...")
     
 
 args = {
@@ -177,7 +199,6 @@ dag = DAG(
     dag_id = 'my_data_pipeline',
     default_args = args,
     # schedule_interval = '@hourly',
-    # schedule_interval = dt.time_delta(minutes=2)
     schedule_interval = "*/2 * * * *",
     max_active_runs = 1,
 )

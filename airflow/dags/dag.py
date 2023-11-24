@@ -162,14 +162,14 @@ def create_weekly_view():
     view_sql = "CREATE VIEW IF NOT EXISTS weekly_summary AS \
     SELECT \
     MIN(start_week) as start_week, \
-    MAX(end_week) as end_week, \
+    MIN(end_week) as end_week, \
     GROUP_CONCAT(service, x'0a') as services, \
     GROUP_CONCAT(total_price, x'0a') AS total_price \
     FROM ( \
         SELECT \
         strftime('%Y-%W', avail_date) AS week, \
         date(avail_date, '-' || strftime('%w', avail_date) || ' days') AS start_week, \
-        date(avail_date, '-' || (6 - strftime('%w', avail_date) % 7) || ' days') AS end_week, \
+        date(avail_date, '+' || (6 - strftime('%w', avail_date) % 7) || ' days') AS end_week, \
         service, \
         SUM(price) AS total_price \
         FROM 'transaction' \

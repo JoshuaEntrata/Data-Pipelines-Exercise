@@ -198,8 +198,7 @@ args = {
 dag = DAG(
     dag_id = 'my_data_pipeline',
     default_args = args,
-    # schedule_interval = '@hourly',
-    schedule_interval = "*/2 * * * *",
+    schedule_interval = '@hourly',
     max_active_runs = 1,
 )
 

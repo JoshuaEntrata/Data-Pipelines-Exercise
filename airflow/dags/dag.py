@@ -12,6 +12,7 @@ import re
 def customer_txn_load_database():
     df_customer_transaction = pd.read_json("/opt/airflow/json/customer_transaction_info.json")
     df_customer_transaction.to_parquet("/opt/airflow/parquet/customer_transaction/customer_txn_load_database.parquet")
+    print("Successfully loaded the customer transaction database...")
 
 
 def customer_txn_fix_name_formats():
@@ -27,6 +28,7 @@ def customer_txn_fix_name_formats():
     df_customer_transaction['first_name'] = df_customer_transaction['first_name'].str.replace('\W', '', regex=True)
 
     df_customer_transaction.to_parquet("/opt/airflow/parquet/customer_transaction/customer_txn_fix_name_format.parquet")
+    print("Successfully fixed the name formats...")
 
 
 def customer_txn_remove_invalid_dates():
@@ -42,6 +44,7 @@ def customer_txn_remove_invalid_dates():
     df_customer_transaction = df_customer_transaction[df_customer_transaction['birthday'] <= df_customer_transaction['avail_date']]
 
     df_customer_transaction.to_parquet("/opt/airflow/parquet/customer_transaction/customer_txn_remove_invalid_dates.parquet")
+    print("Successfully removed invalid dates...")
 
 
 def customer_txn_remove_duplicates():
@@ -54,11 +57,13 @@ def customer_txn_remove_duplicates():
     df_customer_transaction = df_customer_transaction.dropna(axis=0, how="any")
 
     df_customer_transaction.to_parquet("/opt/airflow/parquet/customer_transaction/customer_txn_remove_duplicates.parquet")
+    print("Successfully removed duplicates...")
 
 
 def branch_service_txn_load_database():
     df_branch_service = pd.read_json("/opt/airflow/json/branch_service_transaction_info.json")
     df_branch_service.to_parquet("/opt/airflow/parquet/branch_service/branch_service_txn_load_database.parquet")
+    print("Successfully loaded the branch service transaction database...")
 
 
 def branch_service_txn_fix_branchservice_format():
@@ -72,6 +77,7 @@ def branch_service_txn_fix_branchservice_format():
     df_branch_service = df_branch_service.dropna(subset=['branch_name'])
 
     df_branch_service.to_parquet("/opt/airflow/parquet/branch_service/branch_service_txn_fix_branchservice_format.parquet")
+    print("Successfully fixed branch name and service format...")
 
 
 def branch_service_txn_fix_price_format():
@@ -84,6 +90,7 @@ def branch_service_txn_fix_price_format():
     df_branch_service = df_branch_service[df_branch_service['price'] > 0]
 
     df_branch_service.to_parquet("/opt/airflow/parquet/branch_service/branch_service_txn_fix_price_format.parquet")
+    print("Successfully fixed price format...")
 
 
 def branch_service_txn_remove_duplicates():
@@ -94,6 +101,7 @@ def branch_service_txn_remove_duplicates():
     df_branch_service = df_branch_service.dropna(axis=0, how="any")
 
     df_branch_service.to_parquet("/opt/airflow/parquet/branch_service/branch_service_txn_remove_duplicates.parquet")
+    print("Successfully removed duplicates...")
 
 
 def merge_data_frames():
@@ -103,6 +111,7 @@ def merge_data_frames():
     df_merged = pd.merge(df_customer_transaction, df_branch_service)
     
     df_merged.to_parquet("/opt/airflow/parquet/merged/merged.parquet")
+    print("Successfully merged data frames...")
 
 
 def remove_duplicate_txn_id():
@@ -113,6 +122,7 @@ def remove_duplicate_txn_id():
     df_merged = df_merged.reset_index(drop=True)
 
     df_merged.to_parquet("/opt/airflow/parquet/merged/remove_duplicate_txn_id.parquet")
+    print("Successfully removed duplicate txn ids...")
 
 
 def add_age_column():
@@ -124,6 +134,7 @@ def add_age_column():
     df_merged['age'] = np.floor((df_merged['avail_date'] - df_merged['birthday']).dt.days / 365.25).astype(int)
 
     df_merged.to_parquet("/opt/airflow/parquet/merged/add_age.parquet")
+    print("Successfully added age column...")
 
 
 def ingest_to_database():
@@ -144,6 +155,7 @@ def ingest_to_database():
         cursor.execute(insert_sql, (row[1], row_avail_date, row[3], row[4], row_birthday, row[6], row[7], row[8], row[9]))
 
     conn.commit()
+    print("Successfully ingested data to database...")
     
 def create_weekly_view():
     df_merged = pd.read_parquet("/opt/airflow/parquet/merged/add_age.parquet")
@@ -153,6 +165,7 @@ def create_weekly_view():
     weekly_view = weekly_view.rename(columns={'price': 'Total Sales'}).rename_axis(index={'avail_date': 'Weeks', 'service': 'Service'})
 
     weekly_view.to_excel("weekly_view.xlsx")
+    print("Successfully created weekly view...")
     
 
 args = {
@@ -163,8 +176,9 @@ args = {
 dag = DAG(
     dag_id = 'my_data_pipeline',
     default_args = args,
-    schedule_interval = '@hourly',
+    # schedule_interval = '@hourly',
     # schedule_interval = dt.time_delta(minutes=2)
+    schedule_interval = "*/2 * * * *",
     max_active_runs = 1,
 )
 

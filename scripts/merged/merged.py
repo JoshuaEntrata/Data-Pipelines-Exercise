@@ -20,6 +20,6 @@ print("Resetting index...")
 df_merged = df_merged.reset_index(drop=True)
 
 
-df_branch_service.to_parquet(r"D:\Github\School Projects\Data Warehousing Class\LabExercise3\parquet\merged\merged.parquet")
+df_merged.to_parquet(r"D:\Github\School Projects\Data Warehousing Class\LabExercise3\parquet\merged\merged.parquet")
 print("")
 print("Successfully merged data frames")

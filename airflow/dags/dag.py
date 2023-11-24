@@ -149,8 +149,8 @@ def ingest_to_database():
     df_merged['avail_date'] = pd.to_datetime(df_merged['avail_date'])
 
     for row in df_merged.itertuples():
-        row_avail_date = row[2].strftime('%d-%m-%Y')
-        row_birthday = row[5].strftime('%d-%m-%Y')
+        row_avail_date = row[2].strftime('%Y-%m-%d')
+        row_birthday = row[5].strftime('%Y-%m-%d')
         insert_sql = f"INSERT INTO 'transaction' (txn_id, avail_date, last_name, first_name, birthday, branch_name, service, price, age) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         cursor.execute(insert_sql, (row[1], row_avail_date, row[3], row[4], row_birthday, row[6], row[7], row[8], row[9]))
 
@@ -272,4 +272,4 @@ with dag:
         python_callable=create_weekly_view,
     )
 
-ct_load_database >> ct_fix_name_formats >> ct_remove_invalid_dates >> ct_remove_duplicates >> bst_load_database >> bst_fix_branch_service_format >> bst_fix_price_format >> bst_remove_duplicates >> m_merged_data_frames >> m_remove_duplicate_txn_id >> m_add_age_column >> m_ingest_to_database >> m_create_weekly_view
+ct_load_database >> ct_fix_name_formats >> ct_remove_invalid_dates >> ct_remove_duplicates >> bst_load_database >> bst_fix_branch_service_format >> bst_fix_price_format >> bst_remove_duplicates >> m_merged_data_frames >> m_remove_duplicate_txn_id >> m_add_age_column >> m_ingest_to_database >> m_create_weekly_view 
